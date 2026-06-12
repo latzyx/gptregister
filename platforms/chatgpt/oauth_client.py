@@ -71,13 +71,13 @@ class OAuthClient:
             self.session.proxies = build_requests_proxy_config(self.proxy)
 
     def adopt_browser_context(
-        self,
-        session,
-        *,
-        device_id: str = "",
-        user_agent: str | None = None,
-        sec_ch_ua: str | None = None,
-        accept_language: str | None = None,
+            self,
+            session,
+            *,
+            device_id: str = "",
+            user_agent: str | None = None,
+            sec_ch_ua: str | None = None,
+            accept_language: str | None = None,
     ):
         """承接前序浏览器上下文，延续已建立的 cookie / session。"""
         if session is not None:
@@ -215,7 +215,6 @@ class OAuthClient:
         )
         return user_agent, sec_ch_ua, impersonate
 
-
     @staticmethod
     def _iter_text_fragments(value):
         if isinstance(value, str):
@@ -300,7 +299,7 @@ class OAuthClient:
         return any(marker in combined for marker in blacklist_markers)
 
     def _blacklist_phone_if_needed(
-        self, phone_service, entry, detail="", state: FlowState | None = None
+            self, phone_service, entry, detail="", state: FlowState | None = None
     ):
         if not entry or not self._should_blacklist_phone_failure(detail, state):
             return False
@@ -313,20 +312,20 @@ class OAuthClient:
             return False
 
     def _headers(
-        self,
-        url,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        accept,
-        referer=None,
-        origin=None,
-        content_type=None,
-        navigation=False,
-        fetch_mode=None,
-        fetch_dest=None,
-        fetch_site=None,
-        extra_headers=None,
+            self,
+            url,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            accept,
+            referer=None,
+            origin=None,
+            content_type=None,
+            navigation=False,
+            fetch_mode=None,
+            fetch_dest=None,
+            fetch_site=None,
+            extra_headers=None,
     ):
         accept_language = None
         try:
@@ -393,9 +392,9 @@ class OAuthClient:
 
     def _extract_code_from_state(self, state: FlowState):
         for candidate in (
-            state.continue_url,
-            state.current_url,
-            (state.payload or {}).get("url", ""),
+                state.continue_url,
+                state.current_url,
+                (state.payload or {}).get("url", ""),
         ):
             code = self._extract_code_from_url(candidate)
             if code:
@@ -412,9 +411,9 @@ class OAuthClient:
     def _state_is_email_otp(self, state: FlowState):
         target = f"{state.continue_url} {state.current_url}".lower()
         return (
-            state.page_type == "email_otp_verification"
-            or "email-verification" in target
-            or "email-otp" in target
+                state.page_type == "email_otp_verification"
+                or "email-verification" in target
+                or "email-otp" in target
         )
 
     def _state_is_add_phone(self, state: FlowState):
@@ -430,9 +429,9 @@ class OAuthClient:
         if method != "GET":
             return False
         if (
-            state.source == "api"
-            and state.current_url
-            and state.page_type not in {"login_password", "email_otp_verification"}
+                state.source == "api"
+                and state.current_url
+                and state.page_type not in {"login_password", "email_otp_verification"}
         ):
             return True
         if state.page_type == "external_url" and state.continue_url:
@@ -450,25 +449,25 @@ class OAuthClient:
         }:
             return True
         if any(
-            marker in target
-            for marker in (
-                "sign-in-with-chatgpt",
-                "consent",
-                "workspace",
-                "organization",
-            )
+                marker in target
+                for marker in (
+                        "sign-in-with-chatgpt",
+                        "consent",
+                        "workspace",
+                        "organization",
+                )
         ):
             return True
         session_data = self._decode_oauth_session_cookie() or {}
         return bool(session_data.get("workspaces"))
 
     def _follow_flow_state(
-        self,
-        state: FlowState,
-        referer=None,
-        user_agent=None,
-        impersonate=None,
-        max_hops=16,
+            self,
+            state: FlowState,
+            referer=None,
+            user_agent=None,
+            impersonate=None,
+            max_hops=16,
     ):
         """跟随服务端返回的 continue_url / current_url，返回新的状态或 authorization code。"""
         import re
@@ -545,13 +544,13 @@ class OAuthClient:
         return None, self._state_from_url(last_url or current_url)
 
     def _bootstrap_oauth_session(
-        self,
-        authorize_url,
-        authorize_params,
-        device_id=None,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
+            self,
+            authorize_url,
+            authorize_params,
+            device_id=None,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
     ):
         """启动 OAuth 会话，确保 auth 域上的 login_session 已建立。"""
         if device_id:
@@ -637,13 +636,13 @@ class OAuthClient:
         return authorize_final_url
 
     def _bootstrap_chatgpt_entry(
-        self,
-        email: str,
-        device_id: str,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
+            self,
+            email: str,
+            device_id: str,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
     ) -> str:
         """模拟注册链路一致的 ChatGPT 首页 -> CSRF -> signin/openai。"""
         homepage_url = "https://chatgpt.com/"
@@ -764,17 +763,17 @@ class OAuthClient:
             return authorize_url
 
     def _submit_authorize_continue(
-        self,
-        email,
-        device_id,
-        continue_referer,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        authorize_url=None,
-        authorize_params=None,
-        screen_hint=None,
+            self,
+            email,
+            device_id,
+            continue_referer,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            authorize_url=None,
+            authorize_params=None,
+            screen_hint=None,
     ):
         """提交邮箱，获取 OAuth 流程的第一页状态。"""
         self._enter_stage("authorize_continue", f"email={email}")
@@ -846,10 +845,10 @@ class OAuthClient:
             )
 
             if (
-                r.status_code == 400
-                and "invalid_auth_step" in (r.text or "")
-                and authorize_url
-                and authorize_params
+                    r.status_code == 400
+                    and "invalid_auth_step" in (r.text or "")
+                    and authorize_url
+                    and authorize_params
             ):
                 self._log("invalid_auth_step，重新 bootstrap...")
                 authorize_final_url = self._bootstrap_oauth_session(
@@ -895,14 +894,14 @@ class OAuthClient:
             return None
 
     def _submit_password_verify(
-        self,
-        password,
-        device_id,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        referer=None,
+            self,
+            password,
+            device_id,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            referer=None,
     ):
         """提交密码，获取下一步状态。"""
         self._log("步骤3: POST /api/accounts/password/verify")
@@ -979,14 +978,14 @@ class OAuthClient:
             return None
 
     def _send_passwordless_login_otp(
-        self,
-        email,
-        device_id,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        referer=None,
+            self,
+            email,
+            device_id,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            referer=None,
     ):
         """在 login_password 状态下直接切到 passwordless OTP。"""
         self._log("步骤3: 命中 login_password，按新链路直接触发 passwordless OTP")
@@ -1042,15 +1041,15 @@ class OAuthClient:
             return None
 
     def _submit_signup_register(
-        self,
-        email,
-        password,
-        device_id,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        referer=None,
+            self,
+            email,
+            password,
+            device_id,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            referer=None,
     ):
         """在 OAuth signup 流程中提交邮箱+密码。"""
         self._enter_stage("authorize_continue", f"register_user email={email}")
@@ -1129,13 +1128,13 @@ class OAuthClient:
             return False
 
     def _send_signup_email_otp(
-        self,
-        device_id,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        referer=None,
+            self,
+            device_id,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            referer=None,
     ):
         """在 OAuth signup 流程中触发邮箱验证码。"""
         self._enter_stage("otp", "send signup email otp")
@@ -1211,20 +1210,20 @@ class OAuthClient:
             return None
 
     def signup_and_get_tokens(
-        self,
-        email,
-        password,
-        first_name,
-        last_name,
-        birthdate,
-        *,
-        device_id="",
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        skymail_client=None,
-        allow_phone_verification=False,
-        signup_source="",
+            self,
+            email,
+            password,
+            first_name,
+            last_name,
+            birthdate,
+            *,
+            device_id="",
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            skymail_client=None,
+            allow_phone_verification=False,
+            signup_source="",
     ):
         """完成 OAuth 单链注册并换取 refresh token。"""
         self.last_error = ""
@@ -1451,9 +1450,9 @@ class OAuthClient:
             if self._state_supports_workspace_resolution(state):
                 self._log("步骤6: 执行 workspace/org 选择")
                 consent_entry = (
-                    state.continue_url
-                    or state.current_url
-                    or f"{self.oauth_issuer}/sign-in-with-chatgpt/codex/consent"
+                        state.continue_url
+                        or state.current_url
+                        or f"{self.oauth_issuer}/sign-in-with-chatgpt/codex/consent"
                 )
                 if self._state_is_add_phone(state):
                     consent_entry = f"{self.oauth_issuer}/sign-in-with-chatgpt/codex/consent"
@@ -1491,16 +1490,16 @@ class OAuthClient:
         return None
 
     def _submit_about_you_create_account(
-        self,
-        first_name,
-        last_name,
-        birthdate,
-        device_id,
-        *,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        referer=None,
+            self,
+            first_name,
+            last_name,
+            birthdate,
+            device_id,
+            *,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            referer=None,
     ):
         """在 OAuth 登录态命中 about_you 后提交资料，完成账户创建。"""
         self._enter_stage("about_you", "submit create_account")
@@ -1566,9 +1565,9 @@ class OAuthClient:
             )
 
             if (
-                r.status_code in (401, 403)
-                or "sentinel" in (r.text or "").lower()
-                or "challenge" in (r.text or "").lower()
+                    r.status_code in (401, 403)
+                    or "sentinel" in (r.text or "").lower()
+                    or "challenge" in (r.text or "").lower()
             ):
                 self._log("create_account 首次请求需要额外挑战，补发 sentinel 后重试...")
                 sentinel_token = build_sentinel_token(
@@ -1636,27 +1635,27 @@ class OAuthClient:
             self.session.proxies = build_requests_proxy_config(self.proxy)
 
     def login_and_get_tokens(
-        self,
-        email,
-        password,
-        device_id,
-        user_agent=None,
-        sec_ch_ua=None,
-        impersonate=None,
-        skymail_client=None,
-        prefer_passwordless_login=False,
-        allow_phone_verification=True,
-        force_new_browser=False,
-        force_password_login=False,
-        force_chatgpt_entry=False,
-        screen_hint="login",
-        complete_about_you_if_needed=False,
-        first_name="",
-        last_name="",
-        birthdate="",
-        login_source="",
-        stop_after_login=False,
-        _continue_depth=0,
+            self,
+            email,
+            password,
+            device_id,
+            user_agent=None,
+            sec_ch_ua=None,
+            impersonate=None,
+            skymail_client=None,
+            prefer_passwordless_login=False,
+            allow_phone_verification=True,
+            force_new_browser=False,
+            force_password_login=False,
+            force_chatgpt_entry=False,
+            screen_hint="login",
+            complete_about_you_if_needed=False,
+            first_name="",
+            last_name="",
+            birthdate="",
+            login_source="",
+            stop_after_login=False,
+            _continue_depth=0,
     ):
         """
         完整的 OAuth 登录流程，获取 tokens
@@ -1881,9 +1880,9 @@ class OAuthClient:
                 continue
 
             if (
-                prefer_passwordless_login
-                and self._state_is_add_phone(state)
-                and self._state_requires_navigation(state)
+                    prefer_passwordless_login
+                    and self._state_is_add_phone(state)
+                    and self._state_requires_navigation(state)
             ):
                 self._log("步骤5: OTP 后命中 add_phone，先实际访问 continue_url 争取重签 workspace Cookie")
                 code, next_state = self._follow_flow_state(
@@ -1965,6 +1964,45 @@ class OAuthClient:
                 if raw_dump:
                     self._log(f"add_phone 状态响应体(raw): {raw_dump}")
                 if not allow_phone_verification:
+                    if (
+                        complete_about_you_if_needed
+                        and str(first_name or "").strip()
+                        and str(last_name or "").strip()
+                        and str(birthdate or "").strip()
+                    ):
+                        self._log(
+                            "步骤5: add_phone 命中且 allow_phone_verification=off，"
+                            "尝试提交 about_you 完成账户创建"
+                        )
+                        about_you_state = self._submit_about_you_create_account(
+                            first_name,
+                            last_name,
+                            birthdate,
+                            device_id,
+                            user_agent=user_agent,
+                            sec_ch_ua=sec_ch_ua,
+                            impersonate=impersonate,
+                            referer=(
+                                state.current_url
+                                or state.continue_url
+                                or referer
+                            ),
+                        )
+                        if about_you_state:
+                            if not self._state_is_add_phone(about_you_state):
+                                self._log(
+                                    f"about_you 提交后进入 {describe_flow_state(about_you_state)}，继续流程"
+                                )
+                                referer = state.current_url or referer
+                                state = about_you_state
+                                continue
+                            self._log(
+                                "about_you 提交后仍处于 add_phone，继续尝试 workspace 解析"
+                            )
+                        else:
+                            self._log(
+                                "about_you 提交失败，继续尝试 workspace 解析"
+                            )
                     if self._state_supports_workspace_resolution(state):
                         self._log(
                             "步骤5: add_phone 命中，但检测到 workspace 线索，继续尝试 workspace/org 选择"
@@ -2077,9 +2115,9 @@ class OAuthClient:
             if self._state_supports_workspace_resolution(state):
                 self._log("步骤6: 执行 workspace/org 选择")
                 consent_entry = (
-                    state.continue_url
-                    or state.current_url
-                    or f"{self.oauth_issuer}/sign-in-with-chatgpt/codex/consent"
+                        state.continue_url
+                        or state.current_url
+                        or f"{self.oauth_issuer}/sign-in-with-chatgpt/codex/consent"
                 )
                 if self._state_is_add_phone(state):
                     consent_entry = (
@@ -2131,7 +2169,7 @@ class OAuthClient:
             return None
 
     def _oauth_follow_for_code(
-        self, start_url, referer, user_agent, impersonate, max_hops=16
+            self, start_url, referer, user_agent, impersonate, max_hops=16
     ):
         """跟随 URL 获取 authorization code（手动跟随重定向）"""
         code, next_state = self._follow_flow_state(
@@ -2144,7 +2182,7 @@ class OAuthClient:
         return code, (next_state.current_url or next_state.continue_url or start_url)
 
     def _oauth_submit_workspace_and_org(
-        self, consent_url, device_id, user_agent, impersonate, max_retries=3
+            self, consent_url, device_id, user_agent, impersonate, max_retries=3
     ):
         """提交 workspace 和 organization 选择（带重试）"""
         self._enter_stage("workspace_select", consent_url[:120] if consent_url else "")
@@ -2378,7 +2416,7 @@ class OAuthClient:
             self._browser_pause(0.12, 0.3)
             r = self.session.get(consent_url, **kwargs)
             if r.status_code == 200 and "text/html" in (
-                r.headers.get("content-type", "").lower()
+                    r.headers.get("content-type", "").lower()
             ):
                 return r.text
         except Exception:
@@ -2464,9 +2502,9 @@ class OAuthClient:
         candidates = [html]
 
         for quoted in re.findall(
-            r'streamController\.enqueue\(("(?:\\.|[^"\\])*")\)',
-            html,
-            re.S,
+                r'streamController\.enqueue\(("(?:\\.|[^"\\])*")\)',
+                html,
+                re.S,
         ):
             try:
                 decoded = json.loads(quoted)
@@ -2629,13 +2667,13 @@ class OAuthClient:
         return True, next_state, ""
 
     def _resend_phone_otp(
-        self,
-        phone_number,
-        device_id,
-        user_agent,
-        sec_ch_ua,
-        impersonate,
-        state: FlowState,
+            self,
+            phone_number,
+            device_id,
+            user_agent,
+            sec_ch_ua,
+            impersonate,
+            state: FlowState,
     ):
         request_url = f"{self.oauth_issuer}/api/accounts/add-phone/send"
         headers = self._headers(
@@ -2644,8 +2682,8 @@ class OAuthClient:
             sec_ch_ua=sec_ch_ua,
             accept="application/json",
             referer=state.current_url
-            or state.continue_url
-            or f"{self.oauth_issuer}/add-phone",
+                    or state.continue_url
+                    or f"{self.oauth_issuer}/add-phone",
             origin=self.oauth_issuer,
             content_type="application/json",
             fetch_site="same-origin",
@@ -2705,7 +2743,7 @@ class OAuthClient:
         return parts
 
     def _validate_phone_otp(
-        self, code, device_id, user_agent, sec_ch_ua, impersonate, state: FlowState
+            self, code, device_id, user_agent, sec_ch_ua, impersonate, state: FlowState
     ):
         request_url = f"{self.oauth_issuer}/api/accounts/phone-otp/validate"
         headers = self._headers(
@@ -2714,8 +2752,8 @@ class OAuthClient:
             sec_ch_ua=sec_ch_ua,
             accept="application/json",
             referer=state.current_url
-            or state.continue_url
-            or f"{self.oauth_issuer}/phone-verification",
+                    or state.continue_url
+                    or f"{self.oauth_issuer}/phone-verification",
             origin=self.oauth_issuer,
             content_type="application/json",
             fetch_site="same-origin",
@@ -2759,7 +2797,7 @@ class OAuthClient:
         return True, next_state, ""
 
     def _handle_add_phone_verification(
-        self, device_id, user_agent, sec_ch_ua, impersonate, state: FlowState
+            self, device_id, user_agent, sec_ch_ua, impersonate, state: FlowState
     ):
         configured_phone = self._get_configured_phone_number()
         configured_codes = self._get_configured_phone_codes()
@@ -2778,9 +2816,9 @@ class OAuthClient:
                 return None
 
             if (
-                next_state.page_type != "phone_otp_verification"
-                and "phone-verification"
-                not in f"{next_state.continue_url} {next_state.current_url}".lower()
+                    next_state.page_type != "phone_otp_verification"
+                    and "phone-verification"
+                    not in f"{next_state.continue_url} {next_state.current_url}".lower()
             ):
                 if self._state_supports_workspace_resolution(next_state) or self._state_requires_navigation(next_state):
                     self._log(f"add_phone 提交后已进入后续状态: {describe_flow_state(next_state)}")
@@ -2857,9 +2895,9 @@ class OAuthClient:
                 continue
 
             if (
-                next_state.page_type != "phone_otp_verification"
-                and "phone-verification"
-                not in f"{next_state.continue_url} {next_state.current_url}".lower()
+                    next_state.page_type != "phone_otp_verification"
+                    and "phone-verification"
+                    not in f"{next_state.continue_url} {next_state.current_url}".lower()
             ):
                 last_failure = f"add-phone/send 未进入手机验证码页: {describe_flow_state(next_state)}"
                 self._log(last_failure)
@@ -2871,14 +2909,14 @@ class OAuthClient:
 
             session_data = self._decode_oauth_session_cookie() or {}
             verification_channel = (
-                str(session_data.get("phone_verification_channel") or "sms")
-                .strip()
-                .lower()
-                or "sms"
+                    str(session_data.get("phone_verification_channel") or "sms")
+                    .strip()
+                    .lower()
+                    or "sms"
             )
             bound_phone = (
-                str(session_data.get("phone_number") or entry.phone).strip()
-                or entry.phone
+                    str(session_data.get("phone_number") or entry.phone).strip()
+                    or entry.phone
             )
             self._log(
                 f"add_phone 发码成功: phone={bound_phone}, channel={verification_channel}"
@@ -2905,7 +2943,7 @@ class OAuthClient:
                     code = phone_service.wait_for_code(entry)
                 if not code:
                     last_failure = (
-                        resend_detail or f"手机号 {entry.phone} 未收到短信验证码"
+                            resend_detail or f"手机号 {entry.phone} 未收到短信验证码"
                     )
                     self._log(last_failure)
                     excluded_prefixes.add(prefix)
@@ -2931,17 +2969,17 @@ class OAuthClient:
         return None
 
     def _handle_otp_verification(
-        self,
-        email,
-        device_id,
-        user_agent,
-        sec_ch_ua,
-        impersonate,
-        skymail_client,
-        state,
-        *,
-        prefer_passwordless_login=False,
-        allow_cached_code_retry=False,
+            self,
+            email,
+            device_id,
+            user_agent,
+            sec_ch_ua,
+            impersonate,
+            skymail_client,
+            state,
+            *,
+            prefer_passwordless_login=False,
+            allow_cached_code_retry=False,
     ):
         """处理 OAuth 阶段的邮箱 OTP 验证，返回服务端声明的下一步状态。"""
         self._enter_stage("otp", f"email={email}")
@@ -2963,8 +3001,8 @@ class OAuthClient:
                     sec_ch_ua=sec_ch_ua,
                     accept="application/json",
                     referer=state.current_url
-                    or state.continue_url
-                    or f"{self.oauth_issuer}/log-in/password",
+                            or state.continue_url
+                            or f"{self.oauth_issuer}/log-in/password",
                     origin=self.oauth_issuer,
                     content_type="application/json",
                     fetch_site="same-origin",
@@ -2996,8 +3034,8 @@ class OAuthClient:
                 sec_ch_ua=sec_ch_ua,
                 accept="application/json, text/plain, */*",
                 referer=state.current_url
-                or state.continue_url
-                or f"{self.oauth_issuer}/email-verification",
+                        or state.continue_url
+                        or f"{self.oauth_issuer}/email-verification",
                 fetch_site="same-origin",
                 extra_headers={
                     "oai-device-id": device_id,
@@ -3022,9 +3060,9 @@ class OAuthClient:
         request_url = f"{self.oauth_issuer}/api/accounts/email-otp/validate"
         self._log(f"email_otp_validate: device_id={device_id}")
         otp_referer = (
-            state.current_url
-            or state.continue_url
-            or f"{self.oauth_issuer}/email-verification"
+                state.current_url
+                or state.continue_url
+                or f"{self.oauth_issuer}/email-verification"
         )
         sentinel_otp = get_sentinel_token_via_browser(
             flow="email_otp_validate",
@@ -3141,7 +3179,7 @@ class OAuthClient:
             next_state = self._state_from_payload(
                 otp_data,
                 current_url=str(resp_otp.url)
-                or (state.current_url or state.continue_url or request_url),
+                            or (state.current_url or state.continue_url or request_url),
             )
             self._log(f"OTP 验证通过 {describe_flow_state(next_state)}")
             self._log(
@@ -3282,4 +3320,3 @@ class OAuthClient:
                 f"OAuth 阶段 OTP 验证失败，已尝试 {len(tried_codes)} 个验证码，等待窗口 {otp_wait_seconds}s"
             )
         return None
-
