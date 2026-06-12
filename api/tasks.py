@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 from typing import Optional
 from copy import deepcopy
+from core.base_platform import Account
 from core.db import TaskLog, engine
 from core.task_runtime import (
     AttemptOutcome,
