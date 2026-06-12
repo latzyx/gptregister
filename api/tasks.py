@@ -162,6 +162,69 @@ def _auto_upload_integrations(task_id: str, account):
         _log(task_id, f"  [Auto Upload] 自动导入异常: {e}")
 
 
+def _post_register_chatgpt(
+    task_id: str,
+    account: Account,
+    req: RegisterTaskRequest,
+    proxy: str | None,
+) -> AttemptResult:
+    """ChatGPT 注册后：重新 OAuth 登录获取最新 token → 保存到 DB → 跳过外部同步。"""
+    from core.config_store import config_store
+    from core.db import save_account
+    from core.proxy_pool import proxy_pool
+    from platforms.chatgpt.oauth_client import OAuthClient
+
+    merged_extra = config_store.get_all().copy()
+    merged_extra.update(
+        {k: v for k, v in req.extra.items() if v is not None and v != ""}
+    )
+
+    oauth_client = OAuthClient(
+        merged_extra,
+        proxy=proxy,
+        verbose=False,
+        browser_mode=req.executor_type,
+    )
+    oauth_client._log = lambda msg: _log(task_id, f"  [OAuth登录] {msg}")
+
+    _log(task_id, "  重新 OAuth 登录获取最新 token...")
+    tokens = oauth_client.login_and_get_tokens(
+        email=account.email,
+        password=account.password,
+        device_id="",
+        force_new_browser=True,
+        force_password_login=True,
+        prefer_passwordless_login=False,
+        allow_phone_verification=False,
+        complete_about_you_if_needed=True,
+        screen_hint="login",
+        login_source="post_register_refresh_tokens",
+    )
+
+    if tokens:
+        if tokens.get("access_token"):
+            account.token = tokens["access_token"]
+            account.extra["access_token"] = tokens["access_token"]
+        if tokens.get("refresh_token"):
+            account.extra["refresh_token"] = tokens["refresh_token"]
+        if tokens.get("id_token"):
+            account.extra["id_token"] = tokens["id_token"]
+        if oauth_client.last_workspace_id:
+            account.extra["workspace_id"] = oauth_client.last_workspace_id
+    else:
+        _log(
+            task_id,
+            f"  [OAuth登录失败] {oauth_client.last_error}，使用注册阶段 token",
+        )
+
+    save_account(account)
+    if proxy:
+        proxy_pool.report_success(proxy)
+    _log(task_id, f"[OK] 注册成功: {account.email}")
+    _save_task_log(req.platform, account.email, "success")
+    return AttemptResult.success()
+
+
 def _run_register(task_id: str, req: RegisterTaskRequest):
     from core.registry import get
     from core.base_platform import RegisterConfig
@@ -294,6 +357,10 @@ def _run_register(task_id: str, req: RegisterTaskRequest):
                                 "luckmail_base_url",
                                 merged_extra.get("luckmail_base_url"),
                             )
+                if req.platform == "chatgpt":
+                    return _post_register_chatgpt(
+                        task_id, account, req, _proxy,
+                    )
                 saved_account = save_account(account)
                 if _proxy:
                     proxy_pool.report_success(_proxy)
