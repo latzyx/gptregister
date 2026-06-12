@@ -478,11 +478,30 @@ class RefreshTokenRegistrationEngine:
             )
 
             if use_continued_session:
-                about_you_state = getattr(register_client, "last_registration_state", None)
+                self._log("3. 使用注册会话直接提交 about_you 创建账号...")
+                created, after_about_you = register_client.create_account(
+                    first_name, last_name, birthdate, return_state=True,
+                )
+                if not created:
+                    err_str = str(after_about_you or "")
+                    if "already_exists" in err_str.lower():
+                        from .utils import extract_flow_state
+                        self._log("账号已存在，直接继续后续流程")
+                        after_about_you = extract_flow_state(
+                            current_url=(
+                                f"https://auth.openai.com"
+                                "/sign-in-with-chatgpt/codex/consent"
+                            ),
+                            auth_base="https://auth.openai.com",
+                        )
+                    else:
+                        last_error = f"创建账号失败: {after_about_you}"
+                        result.error_message = last_error
+                        return result
+
                 self._reuse_register_browser_context(register_client, oauth_client)
-                self._log("3. 承接前序 session，跳过 OAuth login，直接从 about_you 接续")
                 self._log("4. 沿用前序阶段的 cookie / device_id / 浏览器指纹")
-                self._log("5. 提交 about_you，并继续 workspace/token 流程")
+                self._log("5. 从 about_you 后续状态继续 workspace/token 流程")
                 tokens = oauth_client.login_and_get_tokens(
                     result.email,
                     self.password,
@@ -502,7 +521,7 @@ class RefreshTokenRegistrationEngine:
                     last_name=last_name,
                     birthdate=birthdate,
                     login_source="post_register_workspace_continue",
-                    initial_state=about_you_state,
+                    initial_state=after_about_you,
                 )
             else:
                 self._log("3. 新开 OAuth session，按 screen_hint=login + passwordless OTP 登录...")
