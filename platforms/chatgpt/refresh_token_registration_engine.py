@@ -478,10 +478,11 @@ class RefreshTokenRegistrationEngine:
             )
 
             if use_continued_session:
+                about_you_state = getattr(register_client, "last_registration_state", None)
                 self._reuse_register_browser_context(register_client, oauth_client)
-                self._log("3. 承接前序 session，继续走 OAuth passwordless 流程")
+                self._log("3. 承接前序 session，跳过 OAuth login，直接从 about_you 接续")
                 self._log("4. 沿用前序阶段的 cookie / device_id / 浏览器指纹")
-                self._log("5. 登录成功后提交 about_you，并继续 workspace/token 流程")
+                self._log("5. 提交 about_you，并继续 workspace/token 流程")
                 tokens = oauth_client.login_and_get_tokens(
                     result.email,
                     self.password,
@@ -501,6 +502,7 @@ class RefreshTokenRegistrationEngine:
                     last_name=last_name,
                     birthdate=birthdate,
                     login_source="post_register_workspace_continue",
+                    initial_state=about_you_state,
                 )
             else:
                 self._log("3. 新开 OAuth session，按 screen_hint=login + passwordless OTP 登录...")

@@ -1656,6 +1656,7 @@ class OAuthClient:
             login_source="",
             stop_after_login=False,
             _continue_depth=0,
+            initial_state=None,
     ):
         """
         完整的 OAuth 登录流程，获取 tokens
@@ -1741,44 +1742,51 @@ class OAuthClient:
                 impersonate=impersonate,
             )
 
-        self._log("步骤1: Bootstrap OAuth session...")
-        authorize_final_url = self._bootstrap_oauth_session(
-            authorize_url,
-            authorize_params,
-            device_id=device_id,
-            user_agent=user_agent,
-            sec_ch_ua=sec_ch_ua,
-            impersonate=impersonate,
-        )
-        if not authorize_final_url:
-            self._set_error("Bootstrap 失败")
-            return None
+        if initial_state is not None:
+            state = initial_state
+            self._log(f"从初始状态开始（跳过 bootstrap）: {describe_flow_state(state)}")
+            seen_states = {}
+            referer = state.current_url or state.continue_url or f"{self.oauth_issuer}/about-you"
+            self._log(f"沿用前序 session，初始 referer={referer[:120]}")
+        else:
+            self._log("步骤1: Bootstrap OAuth session...")
+            authorize_final_url = self._bootstrap_oauth_session(
+                authorize_url,
+                authorize_params,
+                device_id=device_id,
+                user_agent=user_agent,
+                sec_ch_ua=sec_ch_ua,
+                impersonate=impersonate,
+            )
+            if not authorize_final_url:
+                self._set_error("Bootstrap 失败")
+                return None
 
-        continue_referer = (
-            authorize_final_url
-            if authorize_final_url.startswith(self.oauth_issuer)
-            else f"{self.oauth_issuer}/log-in"
-        )
+            continue_referer = (
+                authorize_final_url
+                if authorize_final_url.startswith(self.oauth_issuer)
+                else f"{self.oauth_issuer}/log-in"
+            )
 
-        state = self._submit_authorize_continue(
-            email,
-            device_id,
-            continue_referer,
-            user_agent=user_agent,
-            sec_ch_ua=sec_ch_ua,
-            impersonate=impersonate,
-            authorize_url=authorize_url,
-            authorize_params=authorize_params,
-            screen_hint=str(screen_hint or "login"),
-        )
-        if not state:
-            if not self.last_error:
-                self._set_error("提交邮箱后未进入有效的 OAuth 状态")
-            return None
+            state = self._submit_authorize_continue(
+                email,
+                device_id,
+                continue_referer,
+                user_agent=user_agent,
+                sec_ch_ua=sec_ch_ua,
+                impersonate=impersonate,
+                authorize_url=authorize_url,
+                authorize_params=authorize_params,
+                screen_hint=str(screen_hint or "login"),
+            )
+            if not state:
+                if not self.last_error:
+                    self._set_error("提交邮箱后未进入有效的 OAuth 状态")
+                return None
 
-        self._log(f"OAuth 状态起点: {describe_flow_state(state)}")
-        seen_states = {}
-        referer = continue_referer
+            self._log(f"OAuth 状态起点: {describe_flow_state(state)}")
+            seen_states = {}
+            referer = continue_referer
 
         def _should_stop_after_login(state_to_check: FlowState):
             if not stop_after_login:
@@ -1964,45 +1972,6 @@ class OAuthClient:
                 if raw_dump:
                     self._log(f"add_phone 状态响应体(raw): {raw_dump}")
                 if not allow_phone_verification:
-                    if (
-                        complete_about_you_if_needed
-                        and str(first_name or "").strip()
-                        and str(last_name or "").strip()
-                        and str(birthdate or "").strip()
-                    ):
-                        self._log(
-                            "步骤5: add_phone 命中且 allow_phone_verification=off，"
-                            "尝试提交 about_you 完成账户创建"
-                        )
-                        about_you_state = self._submit_about_you_create_account(
-                            first_name,
-                            last_name,
-                            birthdate,
-                            device_id,
-                            user_agent=user_agent,
-                            sec_ch_ua=sec_ch_ua,
-                            impersonate=impersonate,
-                            referer=(
-                                state.current_url
-                                or state.continue_url
-                                or referer
-                            ),
-                        )
-                        if about_you_state:
-                            if not self._state_is_add_phone(about_you_state):
-                                self._log(
-                                    f"about_you 提交后进入 {describe_flow_state(about_you_state)}，继续流程"
-                                )
-                                referer = state.current_url or referer
-                                state = about_you_state
-                                continue
-                            self._log(
-                                "about_you 提交后仍处于 add_phone，继续尝试 workspace 解析"
-                            )
-                        else:
-                            self._log(
-                                "about_you 提交失败，继续尝试 workspace 解析"
-                            )
                     if self._state_supports_workspace_resolution(state):
                         self._log(
                             "步骤5: add_phone 命中，但检测到 workspace 线索，继续尝试 workspace/org 选择"
