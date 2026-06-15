@@ -362,8 +362,8 @@ class ChatGPTClient:
     def get_next_auth_session_token(self):
         """获取 ChatGPT next-auth 会话 Cookie。"""
         return (
-            self._get_cookie_value("__Secure-next-auth.session-token", "chatgpt.com")
-            or self._get_cookie_value("__Secure-authjs.session-token", "chatgpt.com")
+            self._get_cookie_value("__Secure-next-auth.session-token.0", "chatgpt.com")
+            or self._get_cookie_value("__Secure-authjs.session-token.1", "chatgpt.com")
         )
 
     def fetch_chatgpt_session(self, max_attempts=5, retry_delay=1.2):
